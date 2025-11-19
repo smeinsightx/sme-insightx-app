@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analytics Dashboard - SME Data Insights</title>
+    <meta name="description"
+        content="Comprehensive data analytics and visualization tools for small and medium enterprises. Transform your business data into actionable insights.">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Core Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --secondary: #c17b5a;
+            --accent: #7a9b8e;
+            --neutral: #f8f9fa;
+            --text: #2d3748;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6b 50%, #c17b5a 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--accent);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--secondary);
+            background: rgba(193, 123, 90, 0.1);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--secondary);
+            background: rgba(193, 123, 90, 0.2);
+            transform: scale(1.02);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #2d4a6b 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(30, 58, 95, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, #d4946f 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(193, 123, 90, 0.3);
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--accent) 0%, #8fb3a6 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(122, 155, 142, 0.3);
+        }
+
+        .filter-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .widget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stagger-1 {
+            animation-delay: 0.2s;
+        }
+
+        .stagger-2 {
+            animation-delay: 0.4s;
+        }
+
+        .stagger-3 {
+            animation-delay: 0.6s;
+        }
+
+        .stagger-4 {
+            animation-delay: 0.8s;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--secondary) 100%);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <img src="resources/SME Data Insights & HR Assistant_LOGO2.png"
+                        alt="SME Data Insights & HR Assistant" class="h-10 w-auto">
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="analytics.html" class="nav-link bg-white/20">Analytics</a>
+                    <a href="hr-assistant.html" class="nav-link">HR Assistant</a>
+                    <a href="index.html#features" class="nav-link">Features</a>
+                    <button class="btn-primary">Export Dashboard</button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-white hover:text-gray-300 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div id="mobile-menu" class="md:hidden hidden mt-4 pb-4">
+                <div class="flex flex-col space-y-2">
+                    <a href="index.html" class="nav-link block">Home</a>
+                    <a href="analytics.html" class="nav-link block bg-white/20">Analytics</a>
+                    <a href="hr-assistant.html" class="nav-link block">HR Assistant</a>
+                    <a href="index.html#features" class="nav-link block">Features</a>
+                    <button class="btn-primary w-full mt-4">Export Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-16 px-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-12 fade-in">
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Data Analytics Dashboard</h1>
+                <p class="text-xl text-gray-200 max-w-3xl mx-auto">Transform your raw data into actionable business
+                    intelligence with our powerful analytics tools.</p>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="metric-card fade-in stagger-1">
+                    <div class="text-3xl font-bold mb-2">$850K</div>
+                    <div class="text-sm opacity-90">Total Revenue</div>
+                    <div class="mt-3 text-xs">
+                        <span class="text-green-200">↗ +12.5%</span> vs last month
+                    </div>
+                </div>
+                <div class="metric-card fade-in stagger-2">
+                    <div class="text-3xl font-bold mb-2">1,847</div>
+                    <div class="text-sm opacity-90">Active Customers</div>
+                    <div class="mt-3 text-xs">
+                        <span class="text-green-200">↗ +8.3%</span> vs last month
+                    </div>
+                </div>
+                <div class="metric-card fade-in stagger-3">
+                    <div class="text-3xl font-bold mb-2">$240K</div>
+                    <div class="text-sm opacity-90">Net Profit</div>
+                    <div class="mt-3 text-xs">
+                        <span class="text-green-200">↗ +15.2%</span> vs last month
+                    </div>
+                </div>
+                <div class="metric-card fade-in stagger-4">
+                    <div class="text-3xl font-bold mb-2">28.2%</div>
+                    <div class="text-sm opacity-90">Profit Margin</div>
+                    <div class="mt-3 text-xs">
+                        <span class="text-green-200">↗ +2.1%</span> vs last month
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Upload Section -->
+            <div class="dashboard-card fade-in stagger-2 mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Upload Your Data</h2>
+                <div class="upload-zone" id="data-upload-zone">
+                    <div class="text-4xl mb-4">📊</div>
+                    <h3 class="text-xl font-semibold mb-2">Drag & Drop Your Files Here</h3>
+                    <p class="text-gray-600 mb-4">Supports CSV, Excel, JSON, and XML formats</p>
+                    <div class="flex flex-wrap gap-4 justify-center">
+                        <button class="btn-primary" onclick="loadSampleDataset()">Try Sample Dataset</button>
+                        <button class="btn-secondary" onclick="document.getElementById('file-input').click()">Choose
+                            Files</button>
+                    </div>
+                    <input type="file" id="file-input" multiple accept=".csv,.xlsx,.json,.xml" style="display: none;"
+                        onchange="handleFileUpload(event)">
+                </div>
+            </div>
+
+            <!-- Filters and Controls -->
+            <div class="filter-panel fade-in stagger-3 mb-8">
+                <div class="grid md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-white text-sm font-semibold mb-2">Date Range</label>
+                        <select
+                            class="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-white/40">
+                            <option>Last 30 Days</option>
+                            <option>Last 90 Days</option>
+                            <option>Last 6 Months</option>
+                            <option>Last Year</option>
+                            <option>Custom Range</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-semibold mb-2">Department</label>
+                        <select
+                            class="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-white/40">
+                            <option>All Departments</option>
+                            <option>Sales</option>
+                            <option>Marketing</option>
+                            <option>Development</option>
+                            <option>Support</option>
+                            <option>HR</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-semibold mb-2">Metric Type</label>
+                        <select
+                            class="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-white/40">
+                            <option>Revenue & Profit</option>
+                            <option>Customer Metrics</option>
+                            <option>Operational Efficiency</option>
+                            <option>Employee Performance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-semibold mb-2">Visualization</label>
+                        <select id="chart-type-selector"
+                            class="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-white/40"
+                            onchange="updateMainChart()">
+                            <option value="line">Line Chart</option>
+                            <option value="bar">Bar Chart</option>
+                            <option value="pie">Pie Chart</option>
+                            <option value="scatter">Scatter Plot</option>
+                            <option value="area">Area Chart</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Chart -->
+            <div class="dashboard-card fade-in stagger-4 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Revenue & Growth Trends</h2>
+                    <div class="flex gap-2">
+                        <button class="btn-primary text-sm" onclick="refreshChart()">Refresh</button>
+                        <button class="btn-secondary text-sm" onclick="exportChart()">Export</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div id="main-analytics-chart" style="width: 100%; height: 400px;"></div>
+                </div>
+            </div>
+
+            <!-- Dashboard Widgets -->
+            <div class="widget-grid fade-in stagger-4">
+                <!-- Customer Acquisition -->
+                <div class="dashboard-card">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Customer Acquisition</h3>
+                    <div class="chart-container">
+                        <div id="customer-chart" style="width: 100%; height: 250px;"></div>
+                    </div>
+                </div>
+
+                <!-- Department Performance -->
+                <div class="dashboard-card">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Department Performance</h3>
+                    <div class="chart-container">
+                        <div id="department-chart" style="width: 100%; height: 250px;"></div>
+                    </div>
+                </div>
+
+                <!-- Profit Analysis -->
+                <div class="dashboard-card">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Profit Analysis</h3>
+                    <div class="chart-container">
+                        <div id="profit-chart" style="width: 100%; height: 250px;"></div>
+                    </div>
+                </div>
+
+                <!-- Growth Metrics -->
+                <div class="dashboard-card">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Growth Metrics</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Monthly Growth</span>
+                            <span class="font-bold text-green-600">+12.5%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 75%;"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Customer Retention</span>
+                            <span class="font-bold text-blue-600">89.2%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 89%;"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Employee Satisfaction</span>
+                            <span class="font-bold text-purple-600">94.1%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 94%;"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Market Share</span>
+                            <span class="font-bold text-orange-600">23.8%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 24%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Insights -->
+            <div class="dashboard-card fade-in stagger-4 mt-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">AI-Powered Insights</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                        <h4 class="font-bold text-blue-800 mb-2">📈 Revenue Trend</h4>
+                        <p class="text-blue-700 text-sm">Your revenue has grown consistently over the past 6 months. The
+                            current trend suggests you'll reach $1M in revenue by Q2 next year if the growth rate
+                            continues.</p>
+                    </div>
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                        <h4 class="font-bold text-green-800 mb-2">💰 Cost Optimization</h4>
+                        <p class="text-green-700 text-sm">Marketing expenses have decreased by 15% while maintaining the
+                            same conversion rate. Consider reallocating these savings to product development.</p>
+                    </div>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                        <h4 class="font-bold text-yellow-800 mb-2">👥 Customer Insights</h4>
+                        <p class="text-yellow-700 text-sm">Customer acquisition cost has increased by 8% this quarter.
+                            Focus on retention strategies to maximize lifetime value.</p>
+                    </div>
+                    <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                        <h4 class="font-bold text-purple-800 mb-2">🎯 Seasonal Patterns</h4>
+                        <p class="text-purple-700 text-sm">Historical data shows a 25% spike in sales during holiday
+                            seasons. Plan inventory and marketing campaigns accordingly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="flex items-center justify-center mb-6">
+                <img src="resources/SME Data Insights & HR Assistant_LOGO2.png" alt="SME Data Insights & HR Assistant"
+                    class="h-10 w-auto">
+            </div>
+            <p class="text-gray-300 mb-4">Empowering Small & Medium Enterprises with Intelligent Solutions</p>
+            <p class="text-gray-400 text-sm">© 2025 SME InsightX. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Menu Functionality
+        function initializeMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function () {
+                    mobileMenu.classList.toggle('hidden');
+                });
+
+                // Close mobile menu when clicking on a link
+                mobileMenu.addEventListener('click', function (e) {
+                    if (e.target.tagName === 'A') {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        // Analytics page specific JavaScript
+        let analyticsChart = null;
+        let customerChart = null;
+        let departmentChart = null;
+        let profitChart = null;
+
+        // Sample data for analytics
+        const analyticsData = {
+            months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            revenue: [45000, 52000, 48000, 61000, 55000, 67000, 72000, 69000, 75000, 78000, 82000, 85000],
+            expenses: [35000, 42000, 38000, 45000, 41000, 48000, 52000, 49000, 53000, 55000, 58000, 60000],
+            customers: [120, 135, 128, 155, 142, 168, 175, 162, 185, 192, 205, 218],
+            departments: ['Sales', 'Marketing', 'Development', 'Support', 'HR'],
+            departmentBudget: [35000, 25000, 45000, 20000, 15000],
+            profit: [10000, 10000, 10000, 16000, 14000, 19000, 20000, 20000, 22000, 23000, 24000, 25000]
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeMobileMenu();
+            initializeAnalyticsCharts();
+            initializeFileUpload();
+            initializeScrollAnimations();
+        });
+
+        function initializeAnalyticsCharts() {
+            // Main analytics chart
+            const mainChartDom = document.getElementById('main-analytics-chart');
+            analyticsChart = echarts.init(mainChartDom);
+            updateMainChart();
+
+            // Customer chart
+            const customerChartDom = document.getElementById('customer-chart');
+            customerChart = echarts.init(customerChartDom);
+            const customerOption = {
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: analyticsData.months.slice(-6),
+                    axisLabel: { fontSize: 10 }
+                },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: analyticsData.customers.slice(-6),
+                    type: 'bar',
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#7a9b8e' },
+                            { offset: 1, color: '#8fb3a6' }
+                        ])
+                    }
+                }]
+            };
+            customerChart.setOption(customerOption);
+
+            // Department chart
+            const departmentChartDom = document.getElementById('department-chart');
+            departmentChart = echarts.init(departmentChartDom);
+            const departmentOption = {
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: '70%',
+                    data: analyticsData.departments.map((dept, index) => ({
+                        value: analyticsData.departmentBudget[index],
+                        name: dept,
+                        itemStyle: {
+                            color: ['#1e3a5f', '#c17b5a', '#7a9b8e', '#8fb3a6', '#a8c4b5'][index]
+                        }
+                    }))
+                }]
+            };
+            departmentChart.setOption(departmentOption);
+
+            // Profit chart
+            const profitChartDom = document.getElementById('profit-chart');
+            profitChart = echarts.init(profitChartDom);
+            const profitOption = {
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: analyticsData.months.slice(-6),
+                    axisLabel: { fontSize: 10 }
+                },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: analyticsData.profit.slice(-6),
+                    type: 'line',
+                    smooth: true,
+                    lineStyle: { color: '#c17b5a', width: 3 },
+                    itemStyle: { color: '#c17b5a' },
+                    areaStyle: { color: 'rgba(193, 123, 90, 0.2)' }
+                }]
+            };
+            profitChart.setOption(profitOption);
+        }
+
+        function updateMainChart() {
+            const chartType = document.getElementById('chart-type-selector').value;
+            let option = {};
+
+            switch (chartType) {
+                case 'line':
+                    option = {
+                        title: {
+                            text: 'Revenue & Expenses Trend',
+                            textStyle: { color: '#2d3748', fontSize: 18, fontWeight: 'bold' }
+                        },
+                        tooltip: { trigger: 'axis' },
+                        legend: {
+                            data: ['Revenue', 'Expenses'],
+                            textStyle: { color: '#4a5568' }
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: analyticsData.months,
+                            axisLine: { lineStyle: { color: '#cbd5e0' } },
+                            axisLabel: { color: '#4a5568' }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLine: { lineStyle: { color: '#cbd5e0' } },
+                            axisLabel: { color: '#4a5568' },
+                            splitLine: { lineStyle: { color: '#e2e8f0' } }
+                        },
+                        series: [
+                            {
+                                name: 'Revenue',
+                                type: 'line',
+                                data: analyticsData.revenue,
+                                smooth: true,
+                                lineStyle: { color: '#1e3a5f', width: 3 },
+                                itemStyle: { color: '#1e3a5f' },
+                                areaStyle: { color: 'rgba(30, 58, 95, 0.1)' }
+                            },
+                            {
+                                name: 'Expenses',
+                                type: 'line',
+                                data: analyticsData.expenses,
+                                smooth: true,
+                                lineStyle: { color: '#c17b5a', width: 3 },
+                                itemStyle: { color: '#c17b5a' },
+                                areaStyle: { color: 'rgba(193, 123, 90, 0.1)' }
+                            }
+                        ]
+                    };
+                    break;
+                case 'bar':
+                    option = {
+                        title: {
+                            text: 'Monthly Performance',
+                            textStyle: { color: '#2d3748', fontSize: 18, fontWeight: 'bold' }
+                        },
+                        tooltip: { trigger: 'axis' },
+                        legend: {
+                            data: ['Revenue', 'Expenses'],
+                            textStyle: { color: '#4a5568' }
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: analyticsData.months,
+                            axisLine: { lineStyle: { color: '#cbd5e0' } },
+                            axisLabel: { color: '#4a5568' }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLine: { lineStyle: { color: '#cbd5e0' } },
+                            axisLabel: { color: '#4a5568' },
+                            splitLine: { lineStyle: { color: '#e2e8f0' } }
+                        },
+                        series: [
+                            {
+                                name: 'Revenue',
+                                type: 'bar',
+                                data: analyticsData.revenue,
+                                itemStyle: { color: '#1e3a5f' }
+                            },
+                            {
+                                name: 'Expenses',
+                                type: 'bar',
+                                data: analyticsData.expenses,
+                                itemStyle: { color: '#c17b5a' }
+                            }
+                        ]
+                    };
+                    break;
+                case 'pie':
+                    option = {
+                        title: {
+                            text: 'Revenue Distribution',
+                            textStyle: { color: '#2d3748', fontSize: 18, fontWeight: 'bold' },
+                            left: 'center'
+                        },
+                        tooltip: { trigger: 'item' },
+                        series: [{
+                            type: 'pie',
+                            radius: '50%',
+                            data: [
+                                { value: 35, name: 'Q1 Revenue', itemStyle: { color: '#1e3a5f' } },
+                                { value: 30, name: 'Q2 Revenue', itemStyle: { color: '#c17b5a' } },
+                                { value: 20, name: 'Q3 Revenue', itemStyle: { color: '#7a9b8e' } },
+                                { value: 15, name: 'Q4 Revenue', itemStyle: { color: '#8fb3a6' } }
+                            ]
+                        }]
+                    };
+                    break;
+            }
+
+            analyticsChart.setOption(option);
+        }
+
+        function initializeFileUpload() {
+            const uploadZone = document.getElementById('data-upload-zone');
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                handleFileUpload(e);
+            });
+        }
+
+        function handleFileUpload(event) {
+            const files = event.target.files || event.dataTransfer.files;
+            if (files.length > 0) {
+                // Simulate file processing
+                const uploadZone = document.getElementById('data-upload-zone');
+                uploadZone.innerHTML = `
+                    <div class="text-4xl mb-4">⏳</div>
+                    <h3 class="text-xl font-semibold mb-2">Processing Files...</h3>
+                    <div class="progress-bar w-64 mx-auto mt-4">
+                        <div class="progress-fill" style="width: 0%" id="upload-progress"></div>
+                    </div>
+                `;
+
+                // Animate progress bar
+                anime({
+                    targets: '#upload-progress',
+                    width: '100%',
+                    duration: 2000,
+                    easing: 'easeInOutQuad',
+                    complete: () => {
+                        uploadZone.innerHTML = `
+                            <div class="text-4xl mb-4">✅</div>
+                            <h3 class="text-xl font-semibold mb-2">Files Processed Successfully!</h3>
+                            <p class="text-gray-600 mb-4">Your data has been loaded and visualizations updated.</p>
+                            <button class="btn-primary" onclick="refreshAllCharts()">Update Dashboard</button>
+                        `;
+                    }
+                });
+            }
+        }
+
+        function loadSampleDataset() {
+            const uploadZone = document.getElementById('data-upload-zone');
+            uploadZone.innerHTML = `
+                <div class="text-4xl mb-4">📈</div>
+                <h3 class="text-xl font-semibold mb-2">Sample Dataset Loaded</h3>
+                <p class="text-gray-600 mb-4">TechStart Solutions - 12 months of business data</p>
+                <button class="btn-secondary" onclick="refreshAllCharts()">Update Dashboard</button>
+            `;
+
+            // Refresh all charts with sample data
+            setTimeout(() => {
+                refreshAllCharts();
+            }, 500);
+        }
+
+        function refreshChart() {
+            updateMainChart();
+            showNotification('Chart refreshed successfully!', 'success');
+        }
+
+        function refreshAllCharts() {
+            updateMainChart();
+            initializeAnalyticsCharts();
+            showNotification('All charts updated!', 'success');
+        }
+
+        function exportChart() {
+            showNotification('Chart exported to Downloads folder', 'success');
+        }
+
+        function initializeScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-24 right-6 z-50 p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                } text-white`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            anime({
+                targets: notification,
+                translateX: [300, 0],
+                opacity: [0, 1],
+                duration: 500,
+                easing: 'easeOutQuart'
+            });
+
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    translateX: [0, 300],
+                    opacity: [1, 0],
+                    duration: 500,
+                    easing: 'easeInQuart',
+                    complete: () => {
+                        document.body.removeChild(notification);
+                    }
+                });
+            }, 3000);
+        }
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            if (analyticsChart) analyticsChart.resize();
+            if (customerChart) customerChart.resize();
+            if (departmentChart) departmentChart.resize();
+            if (profitChart) profitChart.resize();
+        });
+    </script>
+</body>
+
+</html>

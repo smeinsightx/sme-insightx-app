@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Assistant - SME Data Insights</title>
+    <meta name="description"
+        content="Intelligent HR assistant with automated CV screening, candidate ranking, and recruitment pipeline management for small and medium enterprises.">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Core Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --secondary: #c17b5a;
+            --accent: #7a9b8e;
+            --neutral: #f8f9fa;
+            --text: #2d3748;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6b 50%, #c17b5a 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--accent);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--secondary);
+            background: rgba(193, 123, 90, 0.1);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--secondary);
+            background: rgba(193, 123, 90, 0.2);
+            transform: scale(1.02);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #2d4a6b 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(30, 58, 95, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, #d4946f 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(193, 123, 90, 0.3);
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .candidate-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: grab;
+        }
+
+        .candidate-card:hover {
+            transform: translateX(8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .candidate-card.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .pipeline-column {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 500px;
+        }
+
+        .pipeline-header {
+            text-align: center;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .pipeline-applied {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .pipeline-screening {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .pipeline-interview {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .pipeline-offer {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .pipeline-hired {
+            background: linear-gradient(135deg, #7a9b8e, #6b8e7a);
+        }
+
+        .match-score {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+        }
+
+        .match-excellent {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .match-good {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .match-fair {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .skill-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(122, 155, 142, 0.2);
+            color: var(--accent);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 2px;
+        }
+
+        .skill-tag.matched {
+            background: var(--accent);
+            color: white;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, var(--accent) 0%, #8fb3a6 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(122, 155, 142, 0.3);
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stagger-1 {
+            animation-delay: 0.2s;
+        }
+
+        .stagger-2 {
+            animation-delay: 0.4s;
+        }
+
+        .stagger-3 {
+            animation-delay: 0.6s;
+        }
+
+        .stagger-4 {
+            animation-delay: 0.8s;
+        }
+
+        .keyword-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .keyword-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .keyword-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <img src="resources/SME Data Insights & HR Assistant_LOGO2.png"
+                        alt="SME Data Insights & HR Assistant" class="h-10 w-auto">
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="analytics.html" class="nav-link">Analytics</a>
+                    <a href="hr-assistant.html" class="nav-link bg-white/20">HR Assistant</a>
+                    <a href="index.html#features" class="nav-link">Features</a>
+                    <button class="btn-primary">Export Report</button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-white hover:text-gray-300 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div id="mobile-menu" class="md:hidden hidden mt-4 pb-4">
+                <div class="flex flex-col space-y-2">
+                    <a href="index.html" class="nav-link block">Home</a>
+                    <a href="analytics.html" class="nav-link block">Analytics</a>
+                    <a href="hr-assistant.html" class="nav-link block bg-white/20">HR Assistant</a>
+                    <a href="index.html#features" class="nav-link block">Features</a>
+                    <button class="btn-primary w-full mt-4">Export Report</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-16 px-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-12 fade-in">
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">HR Assistant & Candidate Screening</h1>
+                <p class="text-xl text-gray-200 max-w-3xl mx-auto">Automate your recruitment process with intelligent CV
+                    screening, candidate ranking, and pipeline management.</p>
+            </div>
+
+            <!-- HR Statistics -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="stats-card fade-in stagger-1">
+                    <div class="text-3xl font-bold mb-2">247</div>
+                    <div class="text-sm opacity-90">Applications Received</div>
+                    <div class="mt-3 text-xs">
+                        <span class="text-green-200">↗ +23%</span> this month
+                    </div>
+                </div>
+                <div class="stats-card fade-in stagger-2">
+                    <div class="text-3xl font-bold mb-2">89</div>
+                    <div class="text-sm opacity-90">Candidates Screened</div>
+                    <div class="mt-3 text-xs">
+                        <span class="text-blue-200">Automated</span> process
+                    </div>
+                </div>
+                <div class="stats-card fade-in stagger-3">
+                    <div class="text-3xl font-bold mb-2">34</div>
+                    <div class="text-sm opacity-90">Interviews Scheduled</div>
+                    <div class="mt-3 text-xs">
+                        <span class="text-yellow-200">Next stage</span> candidates
+                    </div>
+                </div>
+                <div class="stats-card fade-in stagger-4">
+                    <div class="text-3xl font-bold mb-2">12</div>
+                    <div class="text-sm opacity-90">Positions Filled</div>
+                    <div class="mt-3 text-xs">
+                        <span class="text-green-200">✓ Completed</span> hires
+                    </div>
+                </div>
+            </div>
+
+            <!-- CV Upload and Screening -->
+            <div class="grid lg:grid-cols-3 gap-8 mb-12">
+                <!-- CV Upload -->
+                <div class="lg:col-span-1">
+                    <div class="dashboard-card fade-in stagger-2">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Upload CVs</h2>
+                        <div class="upload-zone" id="cv-upload-zone">
+                            <div class="text-4xl mb-4">📄</div>
+                            <h3 class="text-lg font-semibold mb-2">Drop CVs Here</h3>
+                            <p class="text-gray-600 mb-4">Supports PDF, DOCX formats</p>
+                            <button class="btn-primary w-full mb-2" onclick="loadSampleCVs()">Load Sample CVs</button>
+                            <button class="btn-secondary w-full"
+                                onclick="document.getElementById('cv-input').click()">Choose Files</button>
+                            <input type="file" id="cv-input" multiple accept=".pdf,.docx" style="display: none;"
+                                onchange="handleCVUpload(event)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Keywords and Screening -->
+                <div class="lg:col-span-2">
+                    <div class="dashboard-card fade-in stagger-3">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Screening Configuration</h2>
+
+                        <div class="grid md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Job Title</label>
+                                <input type="text" id="job-title" placeholder="e.g., Senior Frontend Developer"
+                                    class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Department</label>
+                                <select id="department"
+                                    class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500">
+                                    <option>Engineering</option>
+                                    <option>Marketing</option>
+                                    <option>Sales</option>
+                                    <option>Design</option>
+                                    <option>Operations</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Required Skills &
+                                Keywords</label>
+                            <textarea id="job-keywords" rows="4"
+                                placeholder="Enter required skills, separated by commas. e.g., JavaScript, React, Node.js, Agile, Team Leadership"
+                                class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500"></textarea>
+                        </div>
+
+                        <div class="grid md:grid-cols-3 gap-4 mb-6">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Experience Level</label>
+                                <select id="experience-level"
+                                    class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500">
+                                    <option>Entry Level (0-2 years)</option>
+                                    <option>Mid Level (3-5 years)</option>
+                                    <option>Senior Level (5+ years)</option>
+                                    <option>Executive Level</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Education Level</label>
+                                <select id="education-level"
+                                    class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500">
+                                    <option>Bachelor's Degree</option>
+                                    <option>Master's Degree</option>
+                                    <option>PhD</option>
+                                    <option>Professional Certification</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Location
+                                    Preference</label>
+                                <select id="location"
+                                    class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500">
+                                    <option>Remote</option>
+                                    <option>Hybrid</option>
+                                    <option>On-site</option>
+                                    <option>Flexible</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button class="btn-primary flex-1" onclick="startScreening()">Start Screening</button>
+                            <button class="btn-secondary" onclick="resetScreening()">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidate Results -->
+            <div class="dashboard-card fade-in stagger-4 mb-12">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Screened Candidates</h2>
+                    <div class="flex gap-2">
+                        <button class="btn-primary text-sm" onclick="sortCandidates('score')">Sort by Score</button>
+                        <button class="btn-secondary text-sm" onclick="sortCandidates('experience')">Sort by
+                            Experience</button>
+                        <button class="btn-primary text-sm" onclick="exportResults()">Export Results</button>
+                    </div>
+                </div>
+
+                <div id="candidate-results" class="space-y-4">
+                    <!-- Candidates will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Recruitment Pipeline -->
+            <div class="dashboard-card fade-in stagger-4 mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Recruitment Pipeline</h2>
+                <p class="text-gray-600 mb-6">Drag and drop candidates between stages to manage your recruitment
+                    process.</p>
+
+                <div class="grid md:grid-cols-5 gap-4" id="pipeline-board">
+                    <!-- Applied -->
+                    <div class="pipeline-column">
+                        <div class="pipeline-header pipeline-applied">
+                            Applied <span id="applied-count"
+                                class="ml-2 bg-white/20 px-2 py-1 rounded-full text-xs">0</span>
+                        </div>
+                        <div id="applied-candidates" class="space-y-3 min-h-96">
+                            <!-- Candidates will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Screening -->
+                    <div class="pipeline-column">
+                        <div class="pipeline-header pipeline-screening">
+                            Screening <span id="screening-count"
+                                class="ml-2 bg-white/20 px-2 py-1 rounded-full text-xs">0</span>
+                        </div>
+                        <div id="screening-candidates" class="space-y-3 min-h-96">
+                            <!-- Candidates will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Interview -->
+                    <div class="pipeline-column">
+                        <div class="pipeline-header pipeline-interview">
+                            Interview <span id="interview-count"
+                                class="ml-2 bg-white/20 px-2 py-1 rounded-full text-xs">0</span>
+                        </div>
+                        <div id="interview-candidates" class="space-y-3 min-h-96">
+                            <!-- Candidates will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Offer -->
+                    <div class="pipeline-column">
+                        <div class="pipeline-header pipeline-offer">
+                            Offer <span id="offer-count"
+                                class="ml-2 bg-white/20 px-2 py-1 rounded-full text-xs">0</span>
+                        </div>
+                        <div id="offer-candidates" class="space-y-3 min-h-96">
+                            <!-- Candidates will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Hired -->
+                    <div class="pipeline-column">
+                        <div class="pipeline-header pipeline-hired">
+                            Hired <span id="hired-count"
+                                class="ml-2 bg-white/20 px-2 py-1 rounded-full text-xs">0</span>
+                        </div>
+                        <div id="hired-candidates" class="space-y-3 min-h-96">
+                            <!-- Candidates will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Dashboard -->
+            <div class="grid md:grid-cols-2 gap-8 fade-in stagger-4">
+                <!-- Recruitment Analytics -->
+                <div class="dashboard-card">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Recruitment Analytics</h3>
+                    <div id="recruitment-chart" style="width: 100%; height: 300px;"></div>
+                </div>
+
+                <!-- Time to Hire -->
+                <div class="dashboard-card">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Time to Hire</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Average Screening Time</span>
+                            <span class="font-bold text-blue-600">2.3 days</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 75%"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Interview Process</span>
+                            <span class="font-bold text-purple-600">8.7 days</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-purple-600 h-2 rounded-full" style="width: 60%"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Total Time to Hire</span>
+                            <span class="font-bold text-green-600">18.2 days</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" style="width: 45%"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Offer Acceptance Rate</span>
+                            <span class="font-bold text-orange-600">87.5%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-orange-600 h-2 rounded-full" style="width: 87%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="flex items-center justify-center mb-6">
+                <img src="resources/SME Data Insights & HR Assistant_LOGO2.png" alt="SME Data Insights & HR Assistant"
+                    class="h-10 w-auto">
+            </div>
+            <p class="text-gray-300 mb-4">Empowering Small & Medium Enterprises with Intelligent Solutions</p>
+            <p class="text-gray-400 text-sm">© 2025 SME InsightX. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Menu Functionality
+        function initializeMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function () {
+                    mobileMenu.classList.toggle('hidden');
+                });
+
+                // Close mobile menu when clicking on a link
+                mobileMenu.addEventListener('click', function (e) {
+                    if (e.target.tagName === 'A') {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        // HR Assistant JavaScript
+        let candidates = [];
+        let recruitmentChart = null;
+        let pipelineData = {
+            applied: [],
+            screening: [],
+            interview: [],
+            offer: [],
+            hired: []
+        };
+
+        // Sample candidates data
+        const sampleCandidates = [
+            {
+                id: 1,
+                name: 'Sarah Johnson',
+                role: 'Senior Frontend Developer',
+                experience: '5 years',
+                skills: ['JavaScript', 'React', 'TypeScript', 'CSS', 'Node.js', 'Agile'],
+                education: 'Master\'s Degree',
+                location: 'Remote',
+                matchScore: 0,
+                avatar: '👩‍💻',
+                stage: 'applied'
+            },
+            {
+                id: 2,
+                name: 'Michael Chen',
+                role: 'Full Stack Developer',
+                experience: '4 years',
+                skills: ['JavaScript', 'React', 'Python', 'Django', 'PostgreSQL', 'Docker'],
+                education: 'Bachelor\'s Degree',
+                location: 'Hybrid',
+                matchScore: 0,
+                avatar: '👨‍💻',
+                stage: 'applied'
+            },
+            {
+                id: 3,
+                name: 'Emily Rodriguez',
+                role: 'UI/UX Designer',
+                experience: '3 years',
+                skills: ['Figma', 'Adobe Creative Suite', 'Prototyping', 'User Research', 'HTML', 'CSS'],
+                education: 'Bachelor\'s Degree',
+                location: 'Remote',
+                matchScore: 0,
+                avatar: '👩‍🎨',
+                stage: 'applied'
+            },
+            {
+                id: 4,
+                name: 'David Kim',
+                role: 'Backend Developer',
+                experience: '6 years',
+                skills: ['Python', 'Node.js', 'MongoDB', 'AWS', 'Kubernetes', 'CI/CD'],
+                education: 'Master\'s Degree',
+                location: 'On-site',
+                matchScore: 0,
+                avatar: '👨‍💻',
+                stage: 'applied'
+            },
+            {
+                id: 5,
+                name: 'Lisa Wang',
+                role: 'DevOps Engineer',
+                experience: '4 years',
+                skills: ['AWS', 'Docker', 'Kubernetes', 'Terraform', 'Jenkins', 'Linux'],
+                education: 'Bachelor\'s Degree',
+                location: 'Hybrid',
+                matchScore: 0,
+                avatar: '👩‍🔧',
+                stage: 'applied'
+            },
+            {
+                id: 6,
+                name: 'James Wilson',
+                role: 'Product Manager',
+                experience: '7 years',
+                skills: ['Product Strategy', 'Agile', 'Data Analysis', 'Stakeholder Management', 'Roadmapping'],
+                education: 'MBA',
+                location: 'Remote',
+                matchScore: 0,
+                avatar: '👨‍💼',
+                stage: 'applied'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeMobileMenu();
+            initializeHRAssistant();
+            initializePipeline();
+            initializeRecruitmentChart();
+            initializeScrollAnimations();
+        });
+
+        function initializeHRAssistant() {
+            candidates = [...sampleCandidates];
+            displayCandidates();
+            updatePipelineCounts();
+        }
+
+        function loadSampleCVs() {
+            candidates = [...sampleCandidates];
+            displayCandidates();
+            updatePipelineCounts();
+
+            const uploadZone = document.getElementById('cv-upload-zone');
+            uploadZone.innerHTML = `
+                <div class="text-4xl mb-4">✅</div>
+                <h3 class="text-lg font-semibold mb-2">Sample CVs Loaded</h3>
+                <p class="text-gray-600 mb-4">6 candidate profiles ready for screening</p>
+                <button class="btn-primary w-full" onclick="resetCVUpload()">Upload Different CVs</button>
+            `;
+
+            showNotification('Sample CVs loaded successfully!', 'success');
+        }
+
+        function resetCVUpload() {
+            const uploadZone = document.getElementById('cv-upload-zone');
+            uploadZone.innerHTML = `
+                <div class="text-4xl mb-4">📄</div>
+                <h3 class="text-lg font-semibold mb-2">Drop CVs Here</h3>
+                <p class="text-gray-600 mb-4">Supports PDF, DOCX formats</p>
+                <button class="btn-primary w-full mb-2" onclick="loadSampleCVs()">Load Sample CVs</button>
+                <button class="btn-secondary w-full" onclick="document.getElementById('cv-input').click()">Choose Files</button>
+                <input type="file" id="cv-input" multiple accept=".pdf,.docx" style="display: none;" onchange="handleCVUpload(event)">
+            `;
+        }
+
+        function handleCVUpload(event) {
+            const files = event.target.files || event.dataTransfer.files;
+            if (files.length > 0) {
+                showNotification(`${files.length} CVs uploaded successfully!`, 'success');
+                // In a real application, you would process the uploaded files here
+            }
+        }
+
+        function startScreening() {
+            const jobKeywords = document.getElementById('job-keywords').value.toLowerCase().split(',').map(k => k.trim()).filter(k => k);
+            const jobTitle = document.getElementById('job-title').value;
+            const experienceLevel = document.getElementById('experience-level').value;
+
+            if (jobKeywords.length === 0) {
+                showNotification('Please enter job keywords for screening', 'error');
+                return;
+            }
+
+            // Calculate match scores for each candidate
+            candidates.forEach(candidate => {
+                const matchingSkills = candidate.skills.filter(skill =>
+                    jobKeywords.some(keyword => skill.toLowerCase().includes(keyword.toLowerCase()))
+                );
+                candidate.matchScore = Math.round((matchingSkills.length / jobKeywords.length) * 100);
+            });
+
+            // Sort by match score
+            candidates.sort((a, b) => b.matchScore - a.matchScore);
+
+            displayCandidates();
+            showNotification('Screening completed! Candidates ranked by match score.', 'success');
+
+            // Animate the results
+            anime({
+                targets: '.candidate-card',
+                scale: [0.9, 1],
+                opacity: [0, 1],
+                delay: anime.stagger(100),
+                duration: 600,
+                easing: 'easeOutQuart'
+            });
+        }
+
+        function displayCandidates() {
+            const resultsContainer = document.getElementById('candidate-results');
+            resultsContainer.innerHTML = '';
+
+            candidates.forEach(candidate => {
+                const candidateCard = document.createElement('div');
+                candidateCard.className = 'candidate-card';
+                candidateCard.draggable = true;
+                candidateCard.dataset.candidateId = candidate.id;
+
+                const matchScoreClass = candidate.matchScore >= 80 ? 'match-excellent' :
+                    candidate.matchScore >= 60 ? 'match-good' : 'match-fair';
+
+                candidateCard.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start">
+                            <div class="text-3xl mr-4">${candidate.avatar}</div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-lg text-gray-800">${candidate.name}</h4>
+                                <p class="text-gray-600 mb-2">${candidate.role} • ${candidate.experience}</p>
+                                <div class="flex flex-wrap gap-1 mb-3">
+                                    ${candidate.skills.map(skill => {
+                    const jobKeywords = document.getElementById('job-keywords')?.value.toLowerCase() || '';
+                    const isMatched = jobKeywords.includes(skill.toLowerCase());
+                    return `<span class="skill-tag ${isMatched ? 'matched' : ''}">${skill}</span>`;
+                }).join('')}
+                                </div>
+                                <div class="flex gap-4 text-sm text-gray-500">
+                                    <span>📚 ${candidate.education}</span>
+                                    <span>📍 ${candidate.location}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="match-score ${matchScoreClass} mb-2">
+                                ${candidate.matchScore}%
+                            </div>
+                            <div class="text-xs text-gray-500">Match Score</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <button class="btn-primary text-sm px-4 py-2" onclick="viewCandidateDetails(${candidate.id})">View Details</button>
+                        <button class="btn-secondary text-sm px-4 py-2" onclick="scheduleInterview(${candidate.id})">Schedule Interview</button>
+                    </div>
+                `;
+
+                resultsContainer.appendChild(candidateCard);
+            });
+        }
+
+        function initializePipeline() {
+            // Initialize Sortable.js for drag and drop
+            const pipelineStages = ['applied', 'screening', 'interview', 'offer', 'hired'];
+
+            pipelineStages.forEach(stage => {
+                const container = document.getElementById(`${stage}-candidates`);
+                if (container) {
+                    new Sortable(container, {
+                        group: 'pipeline',
+                        animation: 150,
+                        ghostClass: 'opacity-50',
+                        onStart: function (evt) {
+                            evt.item.classList.add('dragging');
+                        },
+                        onEnd: function (evt) {
+                            evt.item.classList.remove('dragging');
+                            const candidateId = parseInt(evt.item.dataset.candidateId);
+                            const newStage = evt.to.id.replace('-candidates', '');
+                            updateCandidateStage(candidateId, newStage);
+                        }
+                    });
+                }
+            });
+
+            updatePipelineDisplay();
+        }
+
+        function updatePipelineDisplay() {
+            const pipelineStages = ['applied', 'screening', 'interview', 'offer', 'hired'];
+
+            pipelineStages.forEach(stage => {
+                const container = document.getElementById(`${stage}-candidates`);
+                const candidatesInStage = candidates.filter(c => c.stage === stage);
+
+                container.innerHTML = '';
+                candidatesInStage.forEach(candidate => {
+                    const candidateCard = document.createElement('div');
+                    candidateCard.className = 'candidate-card';
+                    candidateCard.draggable = true;
+                    candidateCard.dataset.candidateId = candidate.id;
+
+                    candidateCard.innerHTML = `
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">${candidate.avatar}</div>
+                            <div>
+                                <h5 class="font-semibold text-gray-800">${candidate.name}</h5>
+                                <p class="text-sm text-gray-600">${candidate.role}</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 mb-2">
+                            <div>Experience: ${candidate.experience}</div>
+                            <div>Match: ${candidate.matchScore}%</div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button class="btn-primary text-xs px-2 py-1" onclick="viewCandidateDetails(${candidate.id})">View</button>
+                        </div>
+                    `;
+
+                    container.appendChild(candidateCard);
+                });
+            });
+
+            updatePipelineCounts();
+        }
+
+        function updateCandidateStage(candidateId, newStage) {
+            const candidate = candidates.find(c => c.id === candidateId);
+            if (candidate) {
+                candidate.stage = newStage;
+                updatePipelineDisplay();
+                showNotification(`${candidate.name} moved to ${newStage}`, 'success');
+            }
+        }
+
+        function updatePipelineCounts() {
+            const pipelineStages = ['applied', 'screening', 'interview', 'offer', 'hired'];
+
+            pipelineStages.forEach(stage => {
+                const count = candidates.filter(c => c.stage === stage).length;
+                const countElement = document.getElementById(`${stage}-count`);
+                if (countElement) {
+                    countElement.textContent = count;
+                }
+            });
+        }
+
+        function initializeRecruitmentChart() {
+            const chartDom = document.getElementById('recruitment-chart');
+            recruitmentChart = echarts.init(chartDom);
+
+            const option = {
+                tooltip: { trigger: 'axis' },
+                legend: {
+                    data: ['Applications', 'Screened', 'Interviews', 'Offers', 'Hired'],
+                    textStyle: { color: '#4a5568' }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    axisLine: { lineStyle: { color: '#cbd5e0' } },
+                    axisLabel: { color: '#4a5568' }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { lineStyle: { color: '#cbd5e0' } },
+                    axisLabel: { color: '#4a5568' },
+                    splitLine: { lineStyle: { color: '#e2e8f0' } }
+                },
+                series: [
+                    {
+                        name: 'Applications',
+                        type: 'line',
+                        data: [45, 52, 38, 61, 47, 73],
+                        smooth: true,
+                        lineStyle: { color: '#1e3a5f', width: 2 },
+                        itemStyle: { color: '#1e3a5f' }
+                    },
+                    {
+                        name: 'Screened',
+                        type: 'line',
+                        data: [32, 41, 28, 45, 35, 58],
+                        smooth: true,
+                        lineStyle: { color: '#c17b5a', width: 2 },
+                        itemStyle: { color: '#c17b5a' }
+                    },
+                    {
+                        name: 'Interviews',
+                        type: 'line',
+                        data: [18, 23, 15, 28, 21, 34],
+                        smooth: true,
+                        lineStyle: { color: '#7a9b8e', width: 2 },
+                        itemStyle: { color: '#7a9b8e' }
+                    },
+                    {
+                        name: 'Offers',
+                        type: 'line',
+                        data: [8, 12, 7, 15, 11, 18],
+                        smooth: true,
+                        lineStyle: { color: '#8fb3a6', width: 2 },
+                        itemStyle: { color: '#8fb3a6' }
+                    },
+                    {
+                        name: 'Hired',
+                        type: 'line',
+                        data: [6, 9, 5, 12, 9, 15],
+                        smooth: true,
+                        lineStyle: { color: '#a8c4b5', width: 2 },
+                        itemStyle: { color: '#a8c4b5' }
+                    }
+                ]
+            };
+
+            recruitmentChart.setOption(option);
+        }
+
+        function sortCandidates(criteria) {
+            if (criteria === 'score') {
+                candidates.sort((a, b) => b.matchScore - a.matchScore);
+            } else if (criteria === 'experience') {
+                candidates.sort((a, b) => {
+                    const expA = parseInt(a.experience);
+                    const expB = parseInt(b.experience);
+                    return expB - expA;
+                });
+            }
+
+            displayCandidates();
+            showNotification(`Candidates sorted by ${criteria}`, 'success');
+        }
+
+        function viewCandidateDetails(candidateId) {
+            const candidate = candidates.find(c => c.id === candidateId);
+            if (candidate) {
+                showNotification(`Viewing details for ${candidate.name}`, 'success');
+                // In a real application, this would open a modal with detailed candidate information
+            }
+        }
+
+        function scheduleInterview(candidateId) {
+            const candidate = candidates.find(c => c.id === candidateId);
+            if (candidate) {
+                showNotification(`Interview scheduled for ${candidate.name}`, 'success');
+                // In a real application, this would open a scheduling interface
+            }
+        }
+
+        function resetScreening() {
+            document.getElementById('job-title').value = '';
+            document.getElementById('job-keywords').value = '';
+            document.getElementById('experience-level').selectedIndex = 0;
+            document.getElementById('education-level').selectedIndex = 0;
+            document.getElementById('location').selectedIndex = 0;
+
+            candidates.forEach(candidate => {
+                candidate.matchScore = 0;
+            });
+
+            displayCandidates();
+            showNotification('Screening configuration reset', 'success');
+        }
+
+        function exportResults() {
+            showNotification('Candidate screening results exported to CSV', 'success');
+            // In a real application, this would generate and download a CSV file
+        }
+
+        function initializeScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-24 right-6 z-50 p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                } text-white`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            anime({
+                targets: notification,
+                translateX: [300, 0],
+                opacity: [0, 1],
+                duration: 500,
+                easing: 'easeOutQuart'
+            });
+
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    translateX: [0, 300],
+                    opacity: [1, 0],
+                    duration: 500,
+                    easing: 'easeInQuart',
+                    complete: () => {
+                        document.body.removeChild(notification);
+                    }
+                });
+            }, 3000);
+        }
+
+        // Resize handler for charts
+        window.addEventListener('resize', () => {
+            if (recruitmentChart) recruitmentChart.resize();
+        });
+    </script>
+</body>
+
+</html>
